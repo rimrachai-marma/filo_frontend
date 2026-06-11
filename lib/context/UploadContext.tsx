@@ -22,6 +22,10 @@ const UploadContext = createContext<UploadContextValue | null>(null);
 export function UploadProvider({ children }: { children: React.ReactNode }) {
   const upload = useUpload();
 
+  React.useEffect(() => {
+    upload.loadPendingSessions();
+  }, [upload]);
+
   return <UploadContext.Provider value={upload}>{children}</UploadContext.Provider>;
 }
 

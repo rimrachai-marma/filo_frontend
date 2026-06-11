@@ -188,6 +188,7 @@ async function apiMutation<T>(path: string, options: MutationOptions = {}): Prom
         method,
         headers: buildHeaders(body),
         body: serializedBody,
+        credentials: "include",
         signal: controller.signal,
       });
     }

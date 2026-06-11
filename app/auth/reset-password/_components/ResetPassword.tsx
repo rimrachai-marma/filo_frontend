@@ -27,7 +27,7 @@ export default function ResetPassword({ token }: { token?: string }) {
   });
 
   const onSubmit = (data: ResetPasswordFormData) => {
-    React.startTransition(() => action(data));
+    React.startTransition(() => action({ ...data, token: token! }));
   };
 
   useEffect(() => {

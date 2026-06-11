@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { UploadCloudIcon } from "lucide-react";
 import { useUploadContext } from "@/lib/context/UploadContext";
 import type { PendingSession } from "@/lib/hooks/useUpload";
@@ -13,11 +13,7 @@ interface ResumePickerProps {
 }
 
 export function ResumePicker({ modalRef }: ResumePickerProps) {
-  const { pendingSessions, loadPendingSessions, resumeSession } = useUploadContext();
-
-  useEffect(() => {
-    loadPendingSessions();
-  }, [loadPendingSessions]);
+  const { pendingSessions, resumeSession } = useUploadContext();
 
   if (pendingSessions.length === 0) return null;
 
@@ -54,12 +50,9 @@ export function ResumePicker({ modalRef }: ResumePickerProps) {
 }
 
 export function ResumePickerTrigger() {
-  const { pendingSessions, loadPendingSessions } = useUploadContext();
-  const modalRef = useRef<HTMLDialogElement>(null);
+  const { pendingSessions } = useUploadContext();
 
-  useEffect(() => {
-    loadPendingSessions();
-  }, [loadPendingSessions]);
+  const modalRef = React.useRef<HTMLDialogElement>(null);
 
   if (pendingSessions.length === 0) return null;
 

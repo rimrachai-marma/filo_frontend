@@ -72,7 +72,7 @@ export async function forgotPassword(_prev: MutationState | null, formData: Form
 
 export async function resetPassword(
   _prev: MutationState | null,
-  formData: ResetPasswordFormData,
+  formData: Omit<ResetPasswordFormData, "confirm"> & { token: string },
 ): Promise<MutationState | null> {
   return await post({ path: "/auth/reset-password", body: formData });
 }

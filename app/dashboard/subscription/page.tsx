@@ -45,7 +45,7 @@ async function PakagesSubcriptionHistory() {
         <p className="text-sm mt-1 text-text-muted">Choose the plan that fits your needs</p>
       </div>
 
-      <Plans packages={packages.data} subscriptions={[]} />
+      <Plans packages={packages.data} subscriptions={subs.data} />
 
       <div>
         <h2 className="text-lg font-display font-semibold mb-4 text-text">Subscription History</h2>
