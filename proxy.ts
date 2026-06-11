@@ -75,11 +75,13 @@ export async function proxy(req: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         path: "/",
+        sameSite: "lax" as "none" | "lax",
       });
       response.cookies.set("admin_refresh_token", newTokens.refresh, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         path: "/",
+        sameSite: "lax" as "none" | "lax",
       });
 
       return response;
