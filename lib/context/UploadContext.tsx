@@ -10,7 +10,7 @@ interface UploadContextValue {
   hasFinished: boolean;
   upload: (file: File, folderId: string) => string;
   uploads: (files: FileList | File[], folderId: string) => void;
-  abortUpload: (itemId: string) => Promise<void>;
+  abortUpload: (uploadId: string) => void;
   dismissItem: (itemId: string) => void;
   dismissAll: () => void;
   loadPendingSessions: () => Promise<void>;
