@@ -246,8 +246,9 @@ export async function adminLogoutAllDevices(): Promise<MutationState> {
 const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  path: "/",
   sameSite: "lax" as "none" | "lax",
+  domain: ".rimrachai.com",
+  path: "/",
 };
 
 export type TokenKind = "user" | "admin";

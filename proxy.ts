@@ -74,14 +74,16 @@ export async function proxy(req: NextRequest) {
       response.cookies.set("admin_access_token", newTokens.access, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        path: "/",
         sameSite: "lax" as "none" | "lax",
+        domain: ".rimrachai.com",
+        path: "/",
       });
       response.cookies.set("admin_refresh_token", newTokens.refresh, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        path: "/",
         sameSite: "lax" as "none" | "lax",
+        domain: ".rimrachai.com",
+        path: "/",
       });
 
       return response;
@@ -124,11 +126,15 @@ export async function proxy(req: NextRequest) {
       response.cookies.set("user_access_token", newTokens.access, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: "lax" as "none" | "lax",
+        domain: ".rimrachai.com",
         path: "/",
       });
       response.cookies.set("user_refresh_token", newTokens.refresh, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: "lax" as "none" | "lax",
+        domain: ".rimrachai.com",
         path: "/",
       });
 
