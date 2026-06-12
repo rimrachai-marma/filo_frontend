@@ -127,12 +127,13 @@ export function useUpload() {
   const speedTrackers = useRef<Map<string, { bytes: number; ts: number }>>(new Map());
 
   // Tracks the currently active XHR for each upload item id.
+  // For simple uploads this holds one XHR; for multipart it holds the XHR of
+  // whichever part is currently in-flight (last one registered wins, which is
+  // fine since parts in the same batch replace each other and abort stops all).
+  // Using a separate ref per-batch slot (see multipartUpload) gives finer
+  // control, but a single "latest active" ref per item is enough to stop the
+  // upload immediately when the user clicks Cancel.
   const activeXhrs = useRef<Map<string, XMLHttpRequest>>(new Map());
-
-  // Tracks which item ids have been aborted. Checked inside multipartUpload
-  // before every async step so we stop processing immediately after an abort
-  // even if the XHR already finished.
-  const abortedIds = useRef<Set<string>>(new Set());
 
   // ─── Atomic item updater ─────────────────────────────────────────────────
   const updateItem = useCallback((id: string, patch: Partial<UploadItem>) => {
@@ -333,12 +334,14 @@ export function useUpload() {
 
         const pendingParts = parts.filter((p) => !p.uploadedAt);
 
+        // Upload in parallel batches of MAX_PARALLEL_PARTS.
+        // Each part registers its xhr under the item id so abortUpload() can
+        // kill the most-recently-started part. Parts within the same batch
+        // overwrite each other in the map — that's acceptable because
+        // xhr.abort() on one doesn't affect the others; we rely on the
+        // "Upload aborted" error propagating out of Promise.all to stop the
+        // whole batch and exit the outer loop.
         for (let i = 0; i < pendingParts.length; i += MAX_PARALLEL_PARTS) {
-          // Check abort flag before starting each batch. This catches the case
-          // where xhr.abort() fired but the XHR completed anyway (race), or
-          // where the abort happened between batches while no XHR was active.
-          if (abortedIds.current.has(itemId)) throw new Error("Upload aborted");
-
           const batch = pendingParts.slice(i, i + MAX_PARALLEL_PARTS);
 
           await Promise.all(
@@ -351,11 +354,6 @@ export function useUpload() {
                 (delta) => onDelta(itemId, delta),
                 (xhr) => activeXhrs.current.set(itemId, xhr),
               );
-
-              // Guard again after the PUT — the abort may have arrived while
-              // the XHR was finishing up. Don't confirm a part for a cancelled
-              // upload or the session will stay PENDING on the backend.
-              if (abortedIds.current.has(itemId)) throw new Error("Upload aborted");
 
               // Persist this part immediately — survives reconnect
               await post({
@@ -391,7 +389,6 @@ export function useUpload() {
       } finally {
         speedTrackers.current.delete(itemId);
         activeXhrs.current.delete(itemId);
-        abortedIds.current.delete(itemId);
       }
     },
     [updateItem, onDelta],
@@ -444,36 +441,33 @@ export function useUpload() {
   // ─── Public: cancel / abort ──────────────────────────────────────────────
   const abortUpload = useCallback(
     async (itemId: string) => {
-      // 1. Mark as aborted FIRST — multipartUpload checks this flag before
-      //    every batch and after every PUT, so even if the XHR finishes just
-      //    before xhr.abort() fires, the loop will see the flag and stop
-      //    without confirming any more parts or calling /complete.
-      abortedIds.current.add(itemId);
-
-      // 2. Kill the in-flight XHR immediately so bytes stop being sent
+      // 1. Immediately kill the in-flight XHR so bytes stop being sent.
+      //    This causes putToR2's "abort" event listener to fire and reject
+      //    the promise with "Upload aborted", which propagates up through
+      //    putWithRetry and out of simpleUpload / multipartUpload into the
+      //    catch block, which sets status: "aborted".
       const xhr = activeXhrs.current.get(itemId);
       if (xhr) {
         xhr.abort();
+        // The map entry is cleaned up in the finally block of the upload
+        // function, but delete it here too in case the finally hasn't run yet.
         activeXhrs.current.delete(itemId);
       }
 
-      // 3. Tell the backend to mark the session ABORTED so it won't appear
-      //    in future loadPendingSessions calls.
+      // 2. Tell the backend to clean up the R2 multipart session so partial
+      //    data doesn't linger in the bucket.
       const item = items.find((i) => i.id === itemId);
       if (item?.sessionId) {
         await del({ path: `/upload/multipart/${item.sessionId}` }).catch(() => {});
       }
 
-      // 4. Update UI — guard against a race where the upload completed
-      //    successfully just before we aborted.
+      // 3. If the upload had already finished before we got here (race between
+      //    the user clicking Cancel and the XHR completing), the status will
+      //    already be "done" and the xhr.abort() above was a no-op. Don't
+      //    overwrite a successful completion.
       setItems((prev) =>
         prev.map((it) => (it.id === itemId && it.status !== "done" ? { ...it, status: "aborted" } : it)),
       );
-
-      // 5. Remove from pending sessions list in case it was a resumed upload.
-      if (item?.sessionId) {
-        setPendingSessions((prev) => prev.filter((s) => s.sessionId !== item.sessionId));
-      }
     },
     [items],
   );
