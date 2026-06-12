@@ -450,7 +450,7 @@ export function useUpload() {
       //    without confirming any more parts or calling /complete.
       abortedIds.current.add(itemId);
 
-      // 2. Kill the in-flight XHR immediately so bytes stop being sent.
+      // 2. Kill the in-flight XHR immediately so bytes stop being sent
       const xhr = activeXhrs.current.get(itemId);
       if (xhr) {
         xhr.abort();
