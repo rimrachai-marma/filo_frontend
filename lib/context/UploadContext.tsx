@@ -24,7 +24,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     upload.loadPendingSessions();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upload.items]);
 
   return <UploadContext.Provider value={upload}>{children}</UploadContext.Provider>;
 }
