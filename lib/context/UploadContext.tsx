@@ -29,15 +29,6 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const errorCount = upload.items.filter((item) => item.status === "error").length;
-
-  React.useEffect(() => {
-    if (errorCount > 0) {
-      upload.loadPendingSessions();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [errorCount]);
-
   return <UploadContext.Provider value={upload}>{children}</UploadContext.Provider>;
 }
 
