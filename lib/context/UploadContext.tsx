@@ -22,10 +22,21 @@ const UploadContext = createContext<UploadContextValue | null>(null);
 export function UploadProvider({ children }: { children: React.ReactNode }) {
   const upload = useUpload();
 
+  upload.items.map((i) => i.status === "error");
+
   React.useEffect(() => {
     upload.loadPendingSessions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [upload.items]);
+  }, []);
+
+  const errorCount = upload.items.filter((item) => item.status === "error").length;
+
+  React.useEffect(() => {
+    if (errorCount > 0) {
+      upload.loadPendingSessions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [errorCount]);
 
   return <UploadContext.Provider value={upload}>{children}</UploadContext.Provider>;
 }
