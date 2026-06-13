@@ -15,6 +15,7 @@ interface UploadContextValue {
   dismissAll: () => void;
   loadPendingSessions: () => Promise<void>;
   resumeSession: (session: PendingSession, file: File) => void;
+  retryUpload: (itemId: string) => void;
 }
 
 const UploadContext = createContext<UploadContextValue | null>(null);

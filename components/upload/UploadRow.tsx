@@ -1,4 +1,4 @@
-import { CheckIcon, XIcon, AlertCircleIcon, ZapIcon } from "lucide-react";
+import { CheckIcon, XIcon, AlertCircleIcon, ZapIcon, RefreshCwIcon } from "lucide-react";
 
 import Spinner from "@/components/ui/Spinner";
 import type { UploadItem } from "@/lib/hooks/useUpload";
@@ -11,7 +11,7 @@ function getDisplayName(item: UploadItem): string {
 }
 
 export default function UploadRow({ item }: { item: UploadItem }) {
-  const { abortUpload, dismissItem } = useUploadContext();
+  const { abortUpload, dismissItem, retryUpload } = useUploadContext();
 
   const isActive = item.status === "uploading" || item.status === "completing";
   const isDone = item.status === "done";
@@ -51,6 +51,17 @@ export default function UploadRow({ item }: { item: UploadItem }) {
         </div>
 
         {/* Action button */}
+        {isError && (
+          <button
+            onClick={() => retryUpload(item.id)}
+            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border border-[rgba(56,189,248,0.3)] text-accent bg-[rgba(56,189,248,0.08)] hover:bg-[rgba(56,189,248,0.15)] transition-colors cursor-pointer"
+            title="Retry upload"
+          >
+            <RefreshCwIcon size={9} />
+            Retry
+          </button>
+        )}
+
         {(isDone || isError || isAborted) && (
           <button
             onClick={() => dismissItem(item.id)}
@@ -60,6 +71,7 @@ export default function UploadRow({ item }: { item: UploadItem }) {
             <XIcon size={12} />
           </button>
         )}
+
         {isActive && (
           <button
             onClick={() => abortUpload(item.id)}

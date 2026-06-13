@@ -517,6 +517,27 @@ export function useUpload() {
     [multipartUpload],
   );
 
+  // ─── Public: retry a failed upload ───────────────────────────────────────
+  const retryUpload = useCallback(
+    (itemId: string) => {
+      const item = items.find((i) => i.id === itemId);
+      if (!item || item.status !== "error") return;
+
+      updateItem(itemId, { status: "uploading", error: null, speed: 0, timeRemaining: null });
+
+      speedTrackers.current.set(itemId, { bytes: 0, ts: Date.now() });
+
+      if (item.strategy === "multipart") {
+        multipartUpload(itemId, item.file, item.folderId, item.sessionId);
+      } else {
+        // simple uploads have no partial state — restart from scratch
+        updateItem(itemId, { uploadedBytes: 0 });
+        simpleUpload(itemId, item.file, item.folderId);
+      }
+    },
+    [items, updateItem, multipartUpload, simpleUpload],
+  );
+
   // ─── Derived ──────────────────────────────────────────────────────────────
   const activeCount = items.filter((i) => i.status === "uploading" || i.status === "completing").length;
 
@@ -534,5 +555,6 @@ export function useUpload() {
     dismissAll,
     loadPendingSessions,
     resumeSession,
+    retryUpload,
   };
 }
