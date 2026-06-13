@@ -24,7 +24,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     upload.loadPendingSessions();
-  }, [upload]);
+  }, []);
 
   return <UploadContext.Provider value={upload}>{children}</UploadContext.Provider>;
 }
